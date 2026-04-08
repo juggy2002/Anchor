@@ -36,33 +36,36 @@ export default function Journal({ session }) {
       .from("journal_entries")
       .select("*")
       .eq("user_id", session.user.id)
-      .order("date", { ascending: false })
-    if (data) {
-      setPastEntries(data)
-      const todayEntry = data.find(e => e.date === todayKey)
-      if (todayEntry) {
-        setEntry(todayEntry.text || "")
-        setCraving(todayEntry.craving)
-      }
-    }
+      .order("created_at", { ascending: false })
+    if (data) setPastEntries(data)
   }
 
   const saveEntry = async () => {
+    if (!entry.trim()) return
     setLoading(true)
     await supabase
       .from("journal_entries")
-      .upsert({
+      .insert({
         user_id: session.user.id,
         date: todayKey,
         text: entry,
         craving,
         prompt,
-      }, { onConflict: "user_id,date" })
+      })
+    setEntry("")
+    setCraving(null)
     await fetchEntries()
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
     setLoading(false)
   }
+
+  const groupedEntries = pastEntries.reduce((acc, e) => {
+    const date = e.date
+    if (!acc[date]) acc[date] = []
+    acc[date].push(e)
+    return acc
+  }, {})
 
   return (
     <div className="p-5">
@@ -74,7 +77,7 @@ export default function Journal({ session }) {
         <p className="text-sm text-amber-900 leading-relaxed italic">"{prompt}"</p>
       </div>
 
-      <p className="text-xs uppercase tracking-widest text-stone-400 mb-2">Your entry</p>
+      <p className="text-xs uppercase tracking-widest text-stone-400 mb-2">New entry</p>
       <textarea
         value={entry}
         onChange={e => setEntry(e.target.value)}
@@ -107,7 +110,7 @@ export default function Journal({ session }) {
 
       <button
         onClick={saveEntry}
-        disabled={loading}
+        disabled={loading || !entry.trim()}
         className="w-full bg-emerald-700 text-white py-3 rounded-xl text-sm font-medium mb-2 hover:bg-emerald-800 transition-colors disabled:opacity-50"
       >
         {saved ? "✓ Saved" : loading ? "Saving..." : "Save entry"}
@@ -121,19 +124,28 @@ export default function Journal({ session }) {
       </button>
 
       {showPast && (
-        <div className="mt-3 flex flex-col gap-3">
-          {pastEntries.length === 0 && (
+        <div className="mt-3 flex flex-col gap-5">
+          {Object.keys(groupedEntries).length === 0 && (
             <p className="text-stone-400 text-sm text-center py-4">No entries yet</p>
           )}
-          {pastEntries.map((e, i) => (
-            <div key={i} className="bg-white border border-stone-200 rounded-xl p-4">
-              <p className="text-xs text-stone-400 mb-1">{e.date}</p>
-              <p className="text-sm text-stone-600 leading-relaxed">{e.text || "No entry written"}</p>
-              {e.craving && (
-                <span className="mt-2 inline-block text-xs bg-stone-100 text-stone-500 px-2 py-1 rounded-full">
-                  Craving: {e.craving}
-                </span>
-              )}
+          {Object.keys(groupedEntries).map(date => (
+            <div key={date}>
+              <p className="text-xs uppercase tracking-widest text-stone-400 mb-2">{date}</p>
+              <div className="flex flex-col gap-2">
+                {groupedEntries[date].map((e, i) => (
+                  <div key={i} className="bg-white border border-stone-200 rounded-xl p-4">
+                    <p className="text-sm text-stone-600 leading-relaxed">{e.text}</p>
+                    {e.craving && (
+                      <span className="mt-2 inline-block text-xs bg-stone-100 text-stone-500 px-2 py-1 rounded-full">
+                        Craving: {e.craving}
+                      </span>
+                    )}
+                    <p className="text-xs text-stone-300 mt-2">
+                      {new Date(e.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
