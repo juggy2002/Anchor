@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { supabase } from "../supabase"
 
 const prompts = [
   "What is one small thing that went well today, and what made it possible?",
@@ -10,41 +11,57 @@ const prompts = [
   "Who supported me today, even in a small way?",
 ]
 
-export default function Journal() {
+export default function Journal({ session }) {
   const [entry, setEntry] = useState("")
   const [craving, setCraving] = useState(null)
   const [saved, setSaved] = useState(false)
   const [pastEntries, setPastEntries] = useState([])
   const [showPast, setShowPast] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const today = new Date().toLocaleDateString("en-GB", {
     weekday: "long", day: "numeric", month: "long", year: "numeric"
   })
 
+  const todayKey = new Date().toISOString().split("T")[0]
   const promptIndex = new Date().getDay()
   const prompt = prompts[promptIndex]
 
   useEffect(() => {
-    const entries = JSON.parse(localStorage.getItem("journalEntries") || "[]")
-    setPastEntries(entries)
-    const todayKey = new Date().toDateString()
-    const todayEntry = entries.find(e => e.date === todayKey)
-    if (todayEntry) {
-      setEntry(todayEntry.text)
-      setCraving(todayEntry.craving)
-    }
+    fetchEntries()
   }, [])
 
-  const saveEntry = () => {
-    const todayKey = new Date().toDateString()
-    const entries = JSON.parse(localStorage.getItem("journalEntries") || "[]")
-    const filtered = entries.filter(e => e.date !== todayKey)
-    const newEntry = { date: todayKey, text: entry, craving, prompt }
-    const updated = [newEntry, ...filtered]
-    localStorage.setItem("journalEntries", JSON.stringify(updated))
-    setPastEntries(updated)
+  const fetchEntries = async () => {
+    const { data } = await supabase
+      .from("journal_entries")
+      .select("*")
+      .eq("user_id", session.user.id)
+      .order("date", { ascending: false })
+    if (data) {
+      setPastEntries(data)
+      const todayEntry = data.find(e => e.date === todayKey)
+      if (todayEntry) {
+        setEntry(todayEntry.text || "")
+        setCraving(todayEntry.craving)
+      }
+    }
+  }
+
+  const saveEntry = async () => {
+    setLoading(true)
+    await supabase
+      .from("journal_entries")
+      .upsert({
+        user_id: session.user.id,
+        date: todayKey,
+        text: entry,
+        craving,
+        prompt,
+      }, { onConflict: "user_id,date" })
+    await fetchEntries()
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
+    setLoading(false)
   }
 
   return (
@@ -90,9 +107,10 @@ export default function Journal() {
 
       <button
         onClick={saveEntry}
-        className="w-full bg-emerald-700 text-white py-3 rounded-xl text-sm font-medium mb-2 hover:bg-emerald-800 transition-colors"
+        disabled={loading}
+        className="w-full bg-emerald-700 text-white py-3 rounded-xl text-sm font-medium mb-2 hover:bg-emerald-800 transition-colors disabled:opacity-50"
       >
-        {saved ? "✓ Saved" : "Save entry"}
+        {saved ? "✓ Saved" : loading ? "Saving..." : "Save entry"}
       </button>
 
       <button

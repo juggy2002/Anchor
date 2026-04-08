@@ -1,20 +1,53 @@
 import { useState, useEffect } from "react"
+import { supabase } from "../supabase"
 
-export default function Home() {
+export default function Home({ session }) {
   const [days, setDays] = useState(0)
   const [mood, setMood] = useState(null)
+  const [profile, setProfile] = useState(null)
 
   useEffect(() => {
-    const start = localStorage.getItem("sobrietyStart")
-    if (start) {
-      const diff = Math.floor((Date.now() - new Date(start)) / (1000 * 60 * 60 * 24))
-      setDays(diff)
-    } else {
-      const today = new Date().toISOString()
-      localStorage.setItem("sobrietyStart", today)
-      setDays(0)
-    }
+    fetchProfile()
+    fetchTodayMood()
   }, [])
+
+  const fetchProfile = async () => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", session.user.id)
+      .single()
+    if (data) {
+      setProfile(data)
+      if (data.sobriety_start) {
+        const diff = Math.floor((Date.now() - new Date(data.sobriety_start)) / (1000 * 60 * 60 * 24))
+        setDays(diff)
+      }
+    }
+  }
+
+  const fetchTodayMood = async () => {
+    const today = new Date().toISOString().split("T")[0]
+    const { data } = await supabase
+      .from("mood_logs")
+      .select("*")
+      .eq("user_id", session.user.id)
+      .eq("date", today)
+      .single()
+    if (data) setMood(data.mood)
+  }
+
+  const saveMood = async (index) => {
+    setMood(index)
+    const today = new Date().toISOString().split("T")[0]
+    await supabase
+      .from("mood_logs")
+      .upsert({
+        user_id: session.user.id,
+        date: today,
+        mood: index,
+      }, { onConflict: "user_id,date" })
+  }
 
   const milestones = [
     { days: 1, icon: "🌱", label: "First Step" },
@@ -31,9 +64,11 @@ export default function Home() {
   return (
     <div className="p-5">
       <h1 className="font-serif text-3xl text-emerald-700 mt-3">Anchor</h1>
-      <p className="text-stone-400 text-sm mb-4">Good to see you today</p>
+      <p className="text-stone-400 text-sm mb-4">
+        {profile?.name ? `Good to see you, ${profile.name}` : "Good to see you today"}
+      </p>
 
-      <div className="bg-emerald-700 rounded-2xl p-6 mb-5 relative overflow-hidden">
+      <div className="bg-emerald-700 rounded-2xl p-6 mb-5">
         <div className="text-7xl font-bold text-white mb-1">{days}</div>
         <div className="text-emerald-200 text-xs uppercase tracking-widest mb-4">Days sober</div>
         <div className="flex gap-2 flex-wrap">
@@ -66,7 +101,7 @@ export default function Home() {
         {moods.map((m, i) => (
           <button
             key={i}
-            onClick={() => setMood(i)}
+            onClick={() => saveMood(i)}
             className={`flex-1 rounded-xl py-3 text-center border transition-all ${
               mood === i
                 ? "bg-emerald-50 border-emerald-300"
