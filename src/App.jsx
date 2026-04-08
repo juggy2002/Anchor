@@ -4,6 +4,7 @@ import Journal from "./components/Journal"
 import Companion from "./components/Companion"
 import Resources from "./components/Resources"
 import Profile from "./components/Profile"
+import { Analytics } from "@vercel/analytics/next"
 
 export default function App() {
   const [tab, setTab] = useState("home")
