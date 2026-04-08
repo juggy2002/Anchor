@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
+import { supabase } from "../supabase"
 
-export default function Profile() {
+export default function Profile({ session }) {
   const [days, setDays] = useState(0)
   const [journalCount, setJournalCount] = useState(0)
   const [name, setName] = useState("")
@@ -9,45 +10,66 @@ export default function Profile() {
   const [startDate, setStartDate] = useState("")
   const [editingDate, setEditingDate] = useState(false)
   const [notifications, setNotifications] = useState(true)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    const stored = localStorage.getItem("sobrietyStart")
-    if (stored) {
-      const diff = Math.floor((Date.now() - new Date(stored)) / (1000 * 60 * 60 * 24))
-      setDays(diff)
-      setStartDate(new Date(stored).toISOString().split("T")[0])
-    }
-    const entries = JSON.parse(localStorage.getItem("journalEntries") || "[]")
-    setJournalCount(entries.length)
-    const storedName = localStorage.getItem("userName") || ""
-    setName(storedName)
-    setTempName(storedName)
+    fetchProfile()
+    fetchJournalCount()
   }, [])
 
-  const milestones = [1, 7, 30, 60, 90, 365]
-  const milestonesUnlocked = milestones.filter(m => days >= m).length
-
-  const saveName = () => {
-    localStorage.setItem("userName", tempName)
-    setName(tempName)
-    setEditingName(false)
+  const fetchProfile = async () => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", session.user.id)
+      .single()
+    if (data) {
+      setName(data.name || "")
+      setTempName(data.name || "")
+      if (data.sobriety_start) {
+        setStartDate(data.sobriety_start)
+        const diff = Math.floor((Date.now() - new Date(data.sobriety_start)) / (1000 * 60 * 60 * 24))
+        setDays(diff)
+      }
+    }
   }
 
-  const saveDate = (val) => {
-    const newDate = new Date(val).toISOString()
-    localStorage.setItem("sobrietyStart", newDate)
-    const diff = Math.floor((Date.now() - new Date(newDate)) / (1000 * 60 * 60 * 24))
-    setDays(diff)
+  const fetchJournalCount = async () => {
+    const { count } = await supabase
+      .from("journal_entries")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", session.user.id)
+    setJournalCount(count || 0)
+  }
+
+  const saveName = async () => {
+    setSaving(true)
+    await supabase
+      .from("profiles")
+      .update({ name: tempName })
+      .eq("id", session.user.id)
+    setName(tempName)
+    setEditingName(false)
+    setSaving(false)
+  }
+
+  const saveDate = async (val) => {
+    await supabase
+      .from("profiles")
+      .update({ sobriety_start: val })
+      .eq("id", session.user.id)
     setStartDate(val)
+    const diff = Math.floor((Date.now() - new Date(val)) / (1000 * 60 * 60 * 24))
+    setDays(diff)
     setEditingDate(false)
   }
 
-  const resetData = () => {
-    if (window.confirm("Are you sure you want to reset all data? This cannot be undone.")) {
-      localStorage.clear()
-      window.location.reload()
-    }
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
   }
+
+  const milestones = [1, 7, 30, 60, 90, 365]
+  const milestonesUnlocked = milestones.filter(m => days >= m).length
 
   const initials = name
     ? name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
@@ -71,13 +93,22 @@ export default function Profile() {
               placeholder="Your name"
               autoFocus
             />
-            <button onClick={saveName} className="text-emerald-700 text-sm font-medium">Save</button>
+            <button
+              onClick={saveName}
+              className="text-emerald-700 text-sm font-medium"
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
           </div>
         ) : (
-          <button onClick={() => setEditingName(true)} className="text-stone-600 font-medium text-base">
+          <button
+            onClick={() => setEditingName(true)}
+            className="text-stone-600 font-medium text-base"
+          >
             {name || "Add your name"} ✏️
           </button>
         )}
+        <p className="text-xs text-stone-400 mt-1">{session.user.email}</p>
       </div>
 
       <div className="grid grid-cols-3 gap-3 mb-6">
@@ -102,7 +133,7 @@ export default function Profile() {
             type="date"
             value={startDate}
             onChange={e => saveDate(e.target.value)}
-            className="text-sm text-stone-700 focus:outline-none"
+            className="text-sm text-stone-700 focus:outline-none w-full"
           />
         ) : (
           <div className="flex justify-between items-center">
@@ -111,7 +142,12 @@ export default function Profile() {
                 day: "numeric", month: "long", year: "numeric"
               }) : "Not set"}
             </p>
-            <button onClick={() => setEditingDate(true)} className="text-xs text-emerald-600">Edit</button>
+            <button
+              onClick={() => setEditingDate(true)}
+              className="text-xs text-emerald-600"
+            >
+              Edit
+            </button>
           </div>
         )}
       </div>
@@ -122,18 +158,22 @@ export default function Profile() {
           <p className="text-sm text-stone-700">Daily check-in reminder</p>
           <button
             onClick={() => setNotifications(!notifications)}
-            className={`w-10 h-6 rounded-full transition-colors ${notifications ? "bg-emerald-600" : "bg-stone-200"}`}
+            className={`w-10 h-6 rounded-full transition-colors relative ${
+              notifications ? "bg-emerald-600" : "bg-stone-200"
+            }`}
           >
-            <div className={`w-4 h-4 bg-white rounded-full mx-1 transition-transform ${notifications ? "translate-x-4" : ""}`} />
+            <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${
+              notifications ? "left-5" : "left-1"
+            }`} />
           </button>
         </div>
       </div>
 
       <button
-        onClick={resetData}
-        className="w-full text-red-400 text-sm py-3 border border-red-100 rounded-xl hover:bg-red-50 transition-colors"
+        onClick={handleSignOut}
+        className="w-full text-stone-400 text-sm py-3 border border-stone-200 rounded-xl hover:bg-stone-100 transition-colors mb-3"
       >
-        Reset all data
+        Sign out
       </button>
     </div>
   )
