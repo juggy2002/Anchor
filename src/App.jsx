@@ -6,6 +6,7 @@ import Journal from "./components/Journal"
 import Companion from "./components/Companion"
 import Resources from "./components/Resources"
 import Profile from "./components/Profile"
+import Calendar from "./components/Calendar"
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -34,34 +35,57 @@ export default function App() {
 
   return (
     <div className="max-w-sm mx-auto min-h-screen flex flex-col bg-stone-50 relative">
+      {tab !== "calendar" && (
+        <button
+          onClick={() => setTab("calendar")}
+          style={{position: 'fixed', top: '1rem', right: 'calc(50% - 190px)', zIndex: 50}}
+className="bg-white border border-stone-200 rounded-full w-10 h-10 flex items-center justify-center shadow-sm hover:border-emerald-300 transition-colors"
+        >
+          📅
+        </button>
+      )}
+
+      {tab === "calendar" && (
+        <button
+          onClick={() => setTab("home")}
+          cstyle={{position: 'fixed', top: '1rem', right: 'calc(50% - 190px)', zIndex: 50}}
+className="bg-white border border-stone-200 rounded-full w-10 h-10 flex items-center justify-center shadow-sm hover:border-emerald-300 transition-colors"
+        >
+          ✕
+        </button>
+      )}
+
       <div className="flex-1 overflow-y-auto pb-20">
         {tab === "home" && <Home session={session} />}
         {tab === "journal" && <Journal session={session} />}
         {tab === "companion" && <Companion session={session} />}
         {tab === "resources" && <Resources />}
+        {tab === "calendar" && <Calendar session={session} />}
         {tab === "profile" && <Profile session={session} />}
       </div>
 
-      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm bg-stone-50 border-t border-stone-200 flex justify-around items-center py-3 z-50">
-        {[
-          { id: "home", icon: "🏠", label: "Home" },
-          { id: "journal", icon: "📓", label: "Journal" },
-          { id: "companion", icon: "💬", label: "Companion" },
-          { id: "resources", icon: "🧭", label: "Resources" },
-          { id: "profile", icon: "👤", label: "Profile" },
-        ].map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setTab(item.id)}
-            className={`flex flex-col items-center gap-1 text-xs px-3 ${
-              tab === item.id ? "text-emerald-700" : "text-stone-400"
-            }`}
-          >
-            <span className="text-lg">{item.icon}</span>
-            {item.label}
-          </button>
-        ))}
-      </nav>
+      {tab !== "calendar" && (
+        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm bg-stone-50 border-t border-stone-200 flex justify-around items-center py-3 z-50">
+          {[
+            { id: "home", icon: "🏠", label: "Home" },
+            { id: "journal", icon: "📓", label: "Journal" },
+            { id: "companion", icon: "💬", label: "Companion" },
+            { id: "resources", icon: "🧭", label: "Resources" },
+            { id: "profile", icon: "👤", label: "Profile" },
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setTab(item.id)}
+              className={`flex flex-col items-center gap-1 text-xs px-3 ${
+                tab === item.id ? "text-emerald-700" : "text-stone-400"
+              }`}
+            >
+              <span className="text-lg">{item.icon}</span>
+              {item.label}
+            </button>
+          ))}
+        </nav>
+      )}
     </div>
   )
 }

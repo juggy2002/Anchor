@@ -14,6 +14,7 @@
     "@supabase/supabase-js": "^2.102.1",
     "@vercel/analytics": "^2.0.1",
     "react": "^19.2.4",
+    "react-calendar": "^6.0.1",
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
