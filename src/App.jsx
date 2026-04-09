@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { Routes, Route, Navigate } from "react-router-dom"
 import { supabase } from "./supabase"
 import Auth from "./components/Auth"
 import Home from "./components/Home"
@@ -7,6 +8,7 @@ import Companion from "./components/Companion"
 import Resources from "./components/Resources"
 import Profile from "./components/Profile"
 import Calendar from "./components/Calendar"
+import Landing from "./components/Landing"
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -31,15 +33,13 @@ export default function App() {
     )
   }
 
-  if (!session) return <Auth />
-
-  return (
+  const AppShell = () => (
     <div className="max-w-sm mx-auto min-h-screen flex flex-col bg-stone-50 relative">
       {tab !== "calendar" && (
         <button
           onClick={() => setTab("calendar")}
           style={{position: 'fixed', top: '1rem', right: 'calc(50% - 190px)', zIndex: 50}}
-className="bg-white border border-stone-200 rounded-full w-10 h-10 flex items-center justify-center shadow-sm hover:border-emerald-300 transition-colors"
+          className="bg-white border border-stone-200 rounded-full w-10 h-10 flex items-center justify-center shadow-sm hover:border-emerald-300 transition-colors"
         >
           📅
         </button>
@@ -48,8 +48,8 @@ className="bg-white border border-stone-200 rounded-full w-10 h-10 flex items-ce
       {tab === "calendar" && (
         <button
           onClick={() => setTab("home")}
-          cstyle={{position: 'fixed', top: '1rem', right: 'calc(50% - 190px)', zIndex: 50}}
-className="bg-white border border-stone-200 rounded-full w-10 h-10 flex items-center justify-center shadow-sm hover:border-emerald-300 transition-colors"
+          style={{position: 'fixed', top: '1rem', right: 'calc(50% - 190px)', zIndex: 50}}
+          className="bg-white border border-stone-200 rounded-full w-10 h-10 flex items-center justify-center shadow-sm hover:border-emerald-300 transition-colors"
         >
           ✕
         </button>
@@ -87,5 +87,13 @@ className="bg-white border border-stone-200 rounded-full w-10 h-10 flex items-ce
         </nav>
       )}
     </div>
+  )
+
+  return (
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route path="/app" element={session ? <AppShell /> : <Auth />} />
+      <Route path="*" element={<Navigate to="/" />} />
+    </Routes>
   )
 }
