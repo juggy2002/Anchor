@@ -124,4 +124,4 @@ describe("Anchor App", () => {
     cy.contains("Sign out").click()
     cy.contains("Welcome back").should("be.visible")
   })
-})
+})()
