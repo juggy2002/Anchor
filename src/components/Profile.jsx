@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { requestNotificationPermission, scheduleLocalNotification } from "../notifications"
 import { supabase } from "../supabase"
 
 export default function Profile({ session }) {
@@ -157,7 +158,17 @@ export default function Profile({ session }) {
         <div className="flex justify-between items-center bg-white border border-stone-200 rounded-xl px-4 py-3">
           <p className="text-sm text-stone-700">Daily check-in reminder</p>
           <button
-            onClick={() => setNotifications(!notifications)}
+            onClick={async () => {
+  if (!notifications) {
+    const granted = await requestNotificationPermission()
+    if (granted) {
+      scheduleLocalNotification()
+      setNotifications(true)
+    }
+  } else {
+    setNotifications(false)
+  }
+}}
             className={`w-10 h-6 rounded-full transition-colors relative ${
               notifications ? "bg-emerald-600" : "bg-stone-200"
             }`}
