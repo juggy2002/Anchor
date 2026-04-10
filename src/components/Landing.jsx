@@ -149,10 +149,10 @@ export default function Landing() {
             </p>
           </div>
           <a
-            href="mailto:hello@anchorrecovery.co.uk"
+            href="mailto:info@anchor-recovery.co.uk"
             className="inline-block bg-emerald-700 text-white px-8 py-3 rounded-full text-sm font-medium hover:bg-emerald-800 transition-colors"
           >
-            hello@anchorrecovery.co.uk
+            info@anchor-recovery.co.uk
           </a>
         </div>
       </section>
