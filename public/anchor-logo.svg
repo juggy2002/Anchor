@@ -1,0 +1,19 @@
+<svg width="100%" viewBox="0 0 680 200" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>Anchor logo</title>
+  <desc>Warm serif wordmark for Anchor recovery companion</desc>
+
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital@0;1&display=swap');
+      .logo-text { font-family: 'Playfair Display', Georgia, serif; }
+    </style>
+  </defs>
+
+  <g transform="translate(340, 0)" text-anchor="middle">
+    <text class="logo-text" y="118" font-size="96" fill="#047857" font-weight="400" letter-spacing="-2">anchor</text>
+    <line x1="-148" y1="132" x2="148" y2="132" stroke="#6ee7b7" stroke-width="1.5" stroke-linecap="round"/>
+    <circle cx="-154" cy="132" r="3" fill="#6ee7b7"/>
+    <circle cx="154" cy="132" r="3" fill="#6ee7b7"/>
+    <text y="155" font-family="Georgia, serif" font-size="11" fill="#9ca3af" letter-spacing="7" font-weight="400">RECOVERY COMPANION</text>
+  </g>
+</svg>

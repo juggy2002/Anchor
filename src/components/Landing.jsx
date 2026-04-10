@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom"
+import Logo from "./Logo"
 
 export default function Landing() {
   const navigate = useNavigate()
@@ -37,7 +38,7 @@ export default function Landing() {
 
       <nav className="fixed top-0 left-0 right-0 z-50 bg-stone-50/90 backdrop-blur-sm border-b border-stone-100">
         <div className="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
-          <span className="serif text-2xl text-emerald-700">Anchor</span>
+          <Logo className="h-8" />
           <button
             onClick={() => navigate("/app")}
             className="bg-emerald-700 text-white text-sm px-5 py-2 rounded-full hover:bg-emerald-800 transition-colors"
@@ -185,7 +186,7 @@ export default function Landing() {
 
       <footer className="py-8 px-6 bg-stone-50 border-t border-stone-100">
         <div className="max-w-5xl mx-auto flex justify-between items-center">
-          <span className="serif text-xl text-emerald-700">Anchor</span>
+          <Logo className="h-6" />
           <p className="text-xs text-stone-400">2026 Anchor Recovery. Built with care in the UK.</p>
         </div>
       </footer>

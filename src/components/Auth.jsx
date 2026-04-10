@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { supabase } from "../supabase"
+import Logo from "./Logo"
 
 export default function Auth() {
   const [mode, setMode] = useState("login")
@@ -51,7 +52,9 @@ export default function Auth() {
   return (
     <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm">
-        <h1 className="font-serif text-4xl text-emerald-700 mb-2 text-center">Anchor</h1>
+        <div className="flex justify-center mb-2">
+  <Logo className="h-14" />
+</div>
         <p className="text-stone-400 text-sm text-center mb-8">Your recovery companion</p>
 
         <div className="bg-white border border-stone-200 rounded-2xl p-6">
