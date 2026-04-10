@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { supabase } from "../supabase"
+import Logo from "./Logo"
 
 export default function Home({ session }) {
   const [days, setDays] = useState(0)
@@ -63,7 +64,7 @@ export default function Home({ session }) {
 
   return (
     <div className="p-5">
-      <h1 className="font-serif text-3xl text-emerald-700 mt-3">Anchor</h1>
+      <Logo />
       <p className="text-stone-400 text-sm mb-4">
         {profile?.name ? `Good to see you, ${profile.name}` : "Good to see you today"}
       </p>
