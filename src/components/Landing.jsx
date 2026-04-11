@@ -39,12 +39,20 @@ export default function Landing() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-stone-50/90 backdrop-blur-sm border-b border-stone-100">
         <div className="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
           <Logo className="h-8" />
-          <button
-            onClick={() => navigate("/app")}
-            className="bg-emerald-700 text-white text-sm px-5 py-2 rounded-full hover:bg-emerald-800 transition-colors"
-          >
-            Log in
-          </button>
+         <div className="flex items-center gap-3">
+  <button
+    onClick={() => navigate("/app")}
+    className="text-stone-500 text-sm px-4 py-2 rounded-full border border-stone-200 hover:border-emerald-300 transition-colors"
+  >
+    Log in
+  </button>
+  <button
+    onClick={() => navigate("/app")}
+    className="bg-emerald-700 text-white text-sm px-5 py-2 rounded-full hover:bg-emerald-800 transition-colors"
+  >
+    For providers
+  </button>
+</div>
         </div>
       </nav>
 
