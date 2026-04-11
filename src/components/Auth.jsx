@@ -29,11 +29,11 @@ export default function Auth() {
       return
     }
     if (data.user) {
-      await supabase.from("profiles").insert({
+      await supabase.from("profiles").upsert({
         id: data.user.id,
         name,
         sobriety_start: new Date().toISOString().split("T")[0],
-      })
+      }, { onConflict: "id" })
       setMessage("Account created! Please check your email to confirm your account, then log in.")
       setMode("login")
     }
@@ -53,9 +53,17 @@ export default function Auth() {
     <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-2">
-  <Logo className="h-14" />
-</div>
+          <Logo className="h-14" />
+        </div>
         <p className="text-stone-400 text-sm text-center mb-8">Your recovery companion</p>
+        
+        <button
+          onClick={() => window.location.href = "/"}
+          className="flex items-center gap-1 text-xs text-stone-400 hover:text-emerald-600 transition-colors mx-auto mb-4 block"
+        >
+          ← Back to home
+        </button>
+        
 
         <div className="bg-white border border-stone-200 rounded-2xl p-6">
           <h2 className="text-lg font-medium text-stone-700 mb-5 text-center">

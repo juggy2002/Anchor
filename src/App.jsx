@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Routes, Route, Navigate } from "react-router-dom"
-import { supabase } from "./supabase"
+import { supabase, getUserRole } from "./supabase"
 import Auth from "./components/Auth"
 import Home from "./components/Home"
 import Journal from "./components/Journal"
@@ -9,20 +9,51 @@ import Resources from "./components/Resources"
 import Profile from "./components/Profile"
 import Calendar from "./components/Calendar"
 import Landing from "./components/Landing"
+import AdminDashboard from "./components/AdminDashboard"
 
 export default function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [orgId, setOrgId] = useState(null)
   const [tab, setTab] = useState("home")
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+      console.log("session:", session?.user?.id, "error:", error)
       setSession(session)
+      if (session) {
+        const role = await getUserRole(session.user.id, session.access_token)
+        console.log("role:", role)
+        if (role) {
+          setIsAdmin(true)
+          setOrgId(role.organisation_id)
+        }
+      }
       setLoading(false)
     })
-    supabase.auth.onAuthStateChange((_event, session) => {
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log("auth state change:", _event, session?.user?.id)
       setSession(session)
+      if (session) {
+        const role = await getUserRole(session.user.id, session.access_token)
+        console.log("role on auth change:", role)
+        if (role) {
+          setIsAdmin(true)
+          setOrgId(role.organisation_id)
+        } else {
+          setIsAdmin(false)
+          setOrgId(null)
+        }
+      } else {
+        setIsAdmin(false)
+        setOrgId(null)
+        setLoading(false)
+      }
     })
+
+    return () => subscription.unsubscribe()
   }, [])
 
   if (loading) {
@@ -92,7 +123,11 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
-      <Route path="/app" element={session ? <AppShell /> : <Auth />} />
+      <Route path="/app" element={
+        !session ? <Auth /> :
+        isAdmin ? <AdminDashboard session={session} orgId={orgId} /> :
+        <AppShell />
+      } />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   )
