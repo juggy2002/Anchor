@@ -10,6 +10,7 @@ import Profile from "./components/Profile"
 import Calendar from "./components/Calendar"
 import Landing from "./components/Landing"
 import AdminDashboard from "./components/AdminDashboard"
+import Onboarding from "./components/Onboarding"
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -128,6 +129,7 @@ export default function App() {
         isAdmin ? <AdminDashboard session={session} orgId={orgId} /> :
         <AppShell />
       } />
+      <Route path="/onboarding" element={<Onboarding session={session} />} />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   )
