@@ -107,12 +107,33 @@ export default function AdminDashboard({ session, orgId }) {
     if (!inviteEmail.trim()) return
     setInviting(true)
     setInviteMessage("")
-    const { error } = await supabase.auth.admin.inviteUserByEmail(inviteEmail)
-    if (error) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-client`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
+            "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            email: inviteEmail,
+            organisation_id: orgId,
+          }),
+        }
+      )
+      const result = await response.json()
+      if (result.error) {
+        setInviteMessage(`Error: ${result.error}`)
+      } else {
+        setInviteMessage(`Invite sent to ${inviteEmail}`)
+        setInviteEmail("")
+        await fetchDashboard()
+      }
+    } catch (err) {
       setInviteMessage("Could not send invite. Please try again.")
-    } else {
-      setInviteMessage(`Invite sent to ${inviteEmail}`)
-      setInviteEmail("")
     }
     setInviting(false)
   }
