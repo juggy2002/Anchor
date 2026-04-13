@@ -6,34 +6,52 @@ import Logo from "./Logo"
 export default function Onboarding({ session }) {
   const [name, setName] = useState("")
   const [sobrietyDate, setSobrietyDate] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (!session) {
-      navigate("/app")
-    }
+    if (!session) navigate("/app")
   }, [session])
 
   const handleSubmit = async () => {
-    if (!name.trim() || !sobrietyDate) {
+    if (!name.trim() || !sobrietyDate || !password) {
       setError("Please fill in all fields")
       return
     }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters")
+      return
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match")
+      return
+    }
     setLoading(true)
-    const { error } = await supabase
+
+    const { error: passwordError } = await supabase.auth.updateUser({ password })
+    if (passwordError) {
+      setError(passwordError.message)
+      setLoading(false)
+      return
+    }
+
+    const { error: profileError } = await supabase
       .from("profiles")
       .upsert({
         id: session.user.id,
         name,
         sobriety_start: sobrietyDate,
       }, { onConflict: "id" })
-    if (error) {
+
+    if (profileError) {
       setError("Something went wrong. Please try again.")
       setLoading(false)
       return
     }
+
     navigate("/app")
   }
 
@@ -65,7 +83,7 @@ export default function Onboarding({ session }) {
             />
           </div>
 
-          <div className="mb-6">
+          <div className="mb-4">
             <label className="text-xs uppercase tracking-widest text-stone-400 mb-1 block">Your sobriety start date</label>
             <input
               type="date"
@@ -74,7 +92,29 @@ export default function Onboarding({ session }) {
               max={new Date().toISOString().split("T")[0]}
               className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400"
             />
-            <p className="text-xs text-stone-400 mt-1">This is the date you started your recovery journey</p>
+            <p className="text-xs text-stone-400 mt-1">The date you started your recovery journey</p>
+          </div>
+
+          <div className="mb-4">
+            <label className="text-xs uppercase tracking-widest text-stone-400 mb-1 block">Create a password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400"
+            />
+          </div>
+
+          <div className="mb-6">
+            <label className="text-xs uppercase tracking-widest text-stone-400 mb-1 block">Confirm password</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              placeholder="••••••••"
+              className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400"
+            />
           </div>
 
           <button
