@@ -104,39 +104,26 @@ export default function AdminDashboard({ session, orgId }) {
   }
 
   const inviteClient = async () => {
-  if (!inviteEmail.trim()) return
-  setInviting(true)
-  setInviteMessage("")
-  try {
-    const { data: { session } } = await supabase.auth.refreshSession()
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-client`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
-          "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
-        },
-        body: JSON.stringify({
-          email: inviteEmail,
-          organisation_id: orgId,
-        }),
-      }
-    )
-    const result = await response.json()
-    if (result.error) {
-      setInviteMessage(`Error: ${result.error}`)
-    } else {
-      setInviteMessage(`Invite sent to ${inviteEmail}`)
-      setInviteEmail("")
-      await fetchDashboard()
-    }
-  } catch (err) {
-    setInviteMessage("Could not send invite. Please try again.")
-  }
-  setInviting(false)
-}
+    if (!inviteEmail.trim()) return
+    setInviting(true)
+    setInviteMessage("")
+    try {
+      const { data: { session: freshSession } } = await supabase.auth.refreshSession()
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-client`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${freshSession.access_token}`,
+            "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            email: inviteEmail,
+            organisation_id: orgId,
+          }),
+        }
+      )
       const result = await response.json()
       if (result.error) {
         setInviteMessage(`Error: ${result.error}`)
