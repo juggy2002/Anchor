@@ -76,7 +76,7 @@ export default function AdminDashboard({ session, orgId }) {
 
           return {
             user_id: m.user_id,
-            name: profile?.name || "Unknown",
+            name: profile?.name || null,
             sobriety_start: profile?.sobriety_start,
             sobrietyDays,
             lastCheckIn,
@@ -85,6 +85,7 @@ export default function AdminDashboard({ session, orgId }) {
             avgMood,
             moods: moods || [],
             atRisk: daysSinceCheckIn === null || daysSinceCheckIn >= 3,
+            pendingOnboarding: !profile?.name,
           }
         })
       )
@@ -152,7 +153,7 @@ export default function AdminDashboard({ session, orgId }) {
     "bg-emerald-200 text-emerald-700",
   ]
 
-  const atRiskCount = members.filter(m => m.atRisk).length
+  const atRiskCount = members.filter(m => m.atRisk && !m.pendingOnboarding).length
   const avgSobrietyDays = members.length
     ? Math.round(members.filter(m => m.sobrietyDays !== null).reduce((sum, m) => sum + m.sobrietyDays, 0) / members.length)
     : 0
@@ -199,7 +200,7 @@ export default function AdminDashboard({ session, orgId }) {
             <p className="text-xs text-stone-400 mt-1">Total clients</p>
           </div>
           <div className="bg-white border border-stone-200 rounded-xl p-4">
-            <p className="text-2xl font-medium text-emerald-700">{members.length - atRiskCount}</p>
+            <p className="text-2xl font-medium text-emerald-700">{members.filter(m => !m.pendingOnboarding && !m.atRisk).length}</p>
             <p className="text-xs text-stone-400 mt-1">Active this week</p>
           </div>
           <div className={`border rounded-xl p-4 ${atRiskCount > 0 ? "bg-red-50 border-red-200" : "bg-white border-stone-200"}`}>
@@ -207,7 +208,7 @@ export default function AdminDashboard({ session, orgId }) {
             <p className="text-xs text-stone-400 mt-1">Need check-in</p>
           </div>
           <div className="bg-white border border-stone-200 rounded-xl p-4">
-            <p className="text-2xl font-medium text-emerald-700">{avgSobrietyDays}</p>
+            <p className="text-2xl font-medium text-emerald-700">{avgSobrietyDays || "—"}</p>
             <p className="text-xs text-stone-400 mt-1">Avg days sober</p>
           </div>
         </div>
@@ -258,7 +259,10 @@ export default function AdminDashboard({ session, orgId }) {
               <div
                 key={i}
                 onClick={() => { setSelectedMember(m); fetchMemberMoods(m.user_id) }}
-                className={`bg-white border rounded-xl p-4 cursor-pointer hover:border-emerald-200 transition-all ${m.atRisk ? "border-red-200 bg-red-50/30" : "border-stone-200"}`}
+                className={`bg-white border rounded-xl p-4 cursor-pointer hover:border-emerald-200 transition-all ${
+                  m.pendingOnboarding ? "border-amber-200 bg-amber-50/30" :
+                  m.atRisk ? "border-red-200 bg-red-50/30" : "border-stone-200"
+                }`}
               >
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3">
@@ -266,7 +270,12 @@ export default function AdminDashboard({ session, orgId }) {
                       {m.name?.[0]?.toUpperCase() || "?"}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-stone-700">{m.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-stone-700">{m.name || "Invited user"}</p>
+                        {m.pendingOnboarding && (
+                          <span className="text-xs bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full">Awaiting onboarding</span>
+                        )}
+                      </div>
                       <p className="text-xs text-stone-400">
                         {m.sobrietyDays !== null ? `${m.sobrietyDays} days sober` : "No start date set"}
                       </p>
@@ -278,44 +287,46 @@ export default function AdminDashboard({ session, orgId }) {
                         {moodEmojis[m.avgMood]} {moodLabels[m.avgMood]}
                       </span>
                     )}
-                    {m.atRisk && (
+                    {m.atRisk && !m.pendingOnboarding && (
                       <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">
                         No check-in
                       </span>
                     )}
                   </div>
                 </div>
-                <div className="flex gap-6 mt-3 pt-3 border-t border-stone-100">
-                  <div>
-                    <p className="text-xs text-stone-400">Last check-in</p>
-                    <p className="text-xs font-medium text-stone-600">
-                      {m.lastCheckIn
-                        ? m.daysSinceCheckIn === 0 ? "Today"
-                        : m.daysSinceCheckIn === 1 ? "Yesterday"
-                        : `${m.daysSinceCheckIn} days ago`
-                        : "Never"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-stone-400">Journal entries</p>
-                    <p className="text-xs font-medium text-stone-600">{m.journalCount}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-stone-400">7-day mood</p>
-                    <div className="flex gap-0.5 mt-0.5">
-                      {m.moods.slice(0, 7).reverse().map((mood, j) => (
-                        <div
-                          key={j}
-                          className={`w-3 h-3 rounded-sm ${
-                            mood.mood <= 1 ? "bg-red-300" :
-                            mood.mood === 2 ? "bg-yellow-300" :
-                            "bg-emerald-300"
-                          }`}
-                        />
-                      ))}
+                {!m.pendingOnboarding && (
+                  <div className="flex gap-6 mt-3 pt-3 border-t border-stone-100">
+                    <div>
+                      <p className="text-xs text-stone-400">Last check-in</p>
+                      <p className="text-xs font-medium text-stone-600">
+                        {m.lastCheckIn
+                          ? m.daysSinceCheckIn === 0 ? "Today"
+                          : m.daysSinceCheckIn === 1 ? "Yesterday"
+                          : `${m.daysSinceCheckIn} days ago`
+                          : "Never"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-stone-400">Journal entries</p>
+                      <p className="text-xs font-medium text-stone-600">{m.journalCount}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-stone-400">7-day mood</p>
+                      <div className="flex gap-0.5 mt-0.5">
+                        {m.moods.slice(0, 7).reverse().map((mood, j) => (
+                          <div
+                            key={j}
+                            className={`w-3 h-3 rounded-sm ${
+                              mood.mood <= 1 ? "bg-red-300" :
+                              mood.mood === 2 ? "bg-yellow-300" :
+                              "bg-emerald-300"
+                            }`}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             ))}
           </div>
@@ -326,7 +337,12 @@ export default function AdminDashboard({ session, orgId }) {
                 {selectedMember.name?.[0]?.toUpperCase() || "?"}
               </div>
               <div>
-                <h2 className="text-lg font-medium text-stone-700">{selectedMember.name}</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-medium text-stone-700">{selectedMember.name || "Invited user"}</h2>
+                  {selectedMember.pendingOnboarding && (
+                    <span className="text-xs bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full">Awaiting onboarding</span>
+                  )}
+                </div>
                 <p className="text-sm text-stone-400">
                   {selectedMember.sobrietyDays !== null ? `${selectedMember.sobrietyDays} days sober` : "No start date set"}
                   {selectedMember.sobriety_start && ` · Started ${new Date(selectedMember.sobriety_start).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`}
