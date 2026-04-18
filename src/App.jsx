@@ -11,6 +11,7 @@ import Calendar from "./components/Calendar"
 import Landing from "./components/Landing"
 import AdminDashboard from "./components/AdminDashboard"
 import Onboarding from "./components/Onboarding"
+import ResetPassword from "./components/ResetPassword"
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -21,11 +22,9 @@ export default function App() {
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
-      console.log("session:", session?.user?.id, "error:", error)
       setSession(session)
       if (session) {
         const role = await getUserRole(session.user.id, session.access_token)
-        console.log("role:", role)
         if (role) {
           setIsAdmin(true)
           setOrgId(role.organisation_id)
@@ -35,11 +34,9 @@ export default function App() {
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log("auth state change:", _event, session?.user?.id)
       setSession(session)
       if (session) {
         const role = await getUserRole(session.user.id, session.access_token)
-        console.log("role on auth change:", role)
         if (role) {
           setIsAdmin(true)
           setOrgId(role.organisation_id)
@@ -130,6 +127,7 @@ export default function App() {
         <AppShell />
       } />
       <Route path="/onboarding" element={<Onboarding session={session} />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   )
