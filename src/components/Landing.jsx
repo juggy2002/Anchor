@@ -117,7 +117,7 @@ export default function Landing() {
               Built by someone in recovery, for people in recovery.
             </h2>
             <p className="text-emerald-100 leading-relaxed mb-4">
-              Anchor was built by Jugaad Singh, who went through his own recovery journey with One Recovery Bucks in High Wycombe. He knows first-hand what it feels like to need support at 2am when a craving hits and to not know where to turn.
+              Anchor was built by Jugaad Singh, who had friends that went through recovery. He knows  what it feels like to need support at 2am when a craving hits and to not know where to turn.
             </p>
             <p className="text-emerald-100 leading-relaxed">
               Anchor is the tool he wished he had. Free for anyone in recovery, always. No subscriptions, no ads, no judgment.
